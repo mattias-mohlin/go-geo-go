@@ -16,7 +16,10 @@ $(function () {
     map.fitWorld();
 
     socket.on('main_new_player', function(msg) {
-        $('#players_table').append('<tr><td class="player-name">' + msg.name + '</td></tr>');
+        $('.players_table tbody').append('<tr class="new_player_row"><td>' + msg.name + '</td><td>0</td></tr>');
+        setTimeout(function() {
+            $('.new_player_row').removeClass('new_player_row');
+        }, 3000);
     });
 
 });

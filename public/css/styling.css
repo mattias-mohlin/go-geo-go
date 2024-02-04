@@ -14,25 +14,61 @@ body {
 }
 
 #button {
-  background-color: #04AA6D;
+  background-color: #8ec7b2;
   border-radius: 8px;
   margin: auto;
   display: block;
-  font-size: 26px;
+  font-size: 30px;
   margin-top: 2px;
 } 
 
 #textarea { 
-  height: 10vh;
+  height: 13vh;
   border:1px solid black; 
 } 
 
 #map { 
-  height: 88vh; 
+  height: 85vh; 
 }
 
 /* admin styles */
 
 #map_admin { 
   height: 50vh; 
+}
+
+.players_table {
+  height: 80vh;
+  width: 100%;
+  /*margin-left: auto;
+  margin-right: auto;
+*/
+  border-collapse: collapse;
+  margin: 25px 0;
+  font-size: 1.9em;
+  font-family: sans-serif;
+  /*min-width: 400px;*/
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.15);
+}
+
+.players_table thead tr {
+  background-color: #009879;
+    color: #ffffff;
+    text-align: left;
+}
+
+.players_table th,
+.players_table td {
+    padding: 12px 15px;
+}
+
+.new_player_row {
+  background-color: lightblue;
+  animation: buildingAnim 2s infinite;
+}
+
+@keyframes buildingAnim {
+  0% {background-color: lightblue;}
+  50% {background-color: rgb(183, 183, 38);}
+  100% {background-color: lightblue;}
 }

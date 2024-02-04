@@ -24,10 +24,23 @@
 
     <body>            
         <div id="textarea">
-            <table id="players_table">                
-            </table>    
+            
         </div>
-        <div id="map_admin"></div>
+        <div hidden id="map_admin"></div>
+        <table class="players_table"> 
+            <thead>
+                <tr>
+                    <th>Spelare</th>
+                    <th>Poäng</th>
+                </tr>
+            </thead>  
+            <tbody>
+                <tr>
+                    <td>m1</td>
+                    <td>100</td>
+                </tr>
+            </tbody>       
+        </table>    
 
         <script src="/socket.io/socket.io.js"></script>
         <script src="/jquery"></script>        
