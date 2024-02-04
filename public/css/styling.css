@@ -1,0 +1,38 @@
+
+body {
+  margin:0;     /* This is used to reset any browser-default margins */
+  height:100vh; /* This is needed to overcome a Chrome bug. */
+  width:100vw;  /* As above. */
+}
+
+#nameinput {
+  margin: auto;
+  display: block;
+  /*background-color: rgb(98, 165, 126);*/
+  font-size: 36px;
+  text-align: center;
+}
+
+#button {
+  background-color: #04AA6D;
+  border-radius: 8px;
+  margin: auto;
+  display: block;
+  font-size: 26px;
+  margin-top: 2px;
+} 
+
+#textarea { 
+  height: 10vh;
+  border:1px solid black; 
+} 
+
+#map { 
+  height: 88vh; 
+}
+
+/* admin styles */
+
+#map_admin { 
+  height: 50vh; 
+}
