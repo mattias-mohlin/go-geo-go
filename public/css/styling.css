@@ -27,12 +27,12 @@ body {
 } 
 
 #textarea { 
-  height: 13vh;
+  height: 20vh;
   border:1px solid black; 
 } 
 
 #map { 
-  height: 85vh; 
+  height: 75vh; 
 }
 
 /* admin styles */
