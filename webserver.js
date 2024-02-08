@@ -7,6 +7,8 @@ module.exports = function() {
 
     let io = null;
 
+    let players = {}; // Player data
+
     // Start the web server and add routes for serving static files. 
     // Then the registerRoutes function is called to allow additional routes to be added in the caller context.
     module.start = function(registerRoutes) {
@@ -43,7 +45,24 @@ module.exports = function() {
         });
 
         io.on('connection', (socket) => {
-            console.log('a user connected');
+            console.log('a user connected: ' + socket.request.headers.referer);  
+            //if (!socket.request.headers.referer.includes('admin')) {
+                // Player connection
+
+                let playerName = 'Spelare ' + Object.keys(players).length;                
+            
+                socket.emit('new_player_name', playerName, (response) => {
+                    // Player received the event
+                    players[playerName] = {'score' : 0};
+                    this.onPlayerDataChanged();
+                });
+            //}
+
+
+            socket.on('disconnect', () => { 
+                // Player dropped
+                console.log('a user disconnected: ' + socket.request.headers.referer);  
+            });
         });
 
         // Register other routes in the caller context
@@ -54,6 +73,33 @@ module.exports = function() {
             logger.log(`Web server started at http://localhost:${port}`)
             logger.logSeparator();
         });        
+    }
+
+    module.renamePlayer = function(oldName, newName) {
+        let i = 1;
+        while (players[newName] != undefined) {
+            // New name alread occupied
+            newName = newName + i;
+            i++;
+        }
+
+        if (oldName in players) {
+            let playerData = players[oldName];
+            delete players[oldName];
+            players[newName] = playerData;
+
+            this.onPlayerDataChanged();
+        }
+        else {
+            logger.log('No player called ' + oldName + ' found!');
+        }
+
+        return newName;
+    }
+
+    // To be called whenever some player data is changed (the Admin UI then needs to be updated)
+    module.onPlayerDataChanged = function() {
+        this.notifyClients('player_data_changed', players);
     }
 
     // Determines if the web server was started

@@ -15,11 +15,38 @@ $(function () {
 
     map.fitWorld();
 
-    socket.on('main_new_player', function(msg) {
-        $('.players_table tbody').append('<tr class="new_player_row"><td>' + msg.name + '</td><td>0</td></tr>');
-        setTimeout(function() {
-            $('.new_player_row').removeClass('new_player_row');
-        }, 3000);
+    $('#start_button').click(function() {                
+        $.get('/start', function (n) {
+            $('#message').text("Var ligger Cochabamba?").show();
+        });
+        $('#start_button').hide();
     });
+
+    socket.on('player_data_changed', function(players) {
+        for (player in players) {
+            let player_row = $('.players_table tbody').find('tr[data-player="' + player + '"]');
+            if (player_row.length > 0) {
+                player_row.addClass('player_change');
+                let cells = player_row.children('td');
+                cells.eq(0).text(player);
+                cells.eq(1).text(players[player].score);
+                continue;
+            }
+
+            // New player
+            $('.players_table tbody').append('<tr data-player="' + player + '" class="player_change"><td>' + player + '</td><td>' + players[player].score +'</td></tr>');
+        }
+
+        // Remove all unchanged rows
+        $('.players_table tbody').find('tr').not('.player_change').remove();
+
+        setTimeout(function() {
+            $('.player_change').removeClass('player_change');
+        }, 3000);
+
+    });  
+    
+    // Request player data
+    $.get('/request_player_data');
 
 });
