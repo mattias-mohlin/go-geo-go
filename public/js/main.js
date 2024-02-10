@@ -41,32 +41,50 @@ $(function () {
     var currentMarker = null;
     var myName = "anonym";
 
-    map.on('click', function(e) {
-        //$('#play_button').text(e.latlng);
-
+    function setMarker(latlng) {
         if (currentMarker != null)
             currentMarker.remove();
 
-        currentMarker = L.marker(e.latlng).addTo(map);
+        if (latlng == null)
+            latlng = {"lat": 57.781799, "lng": 14.158510};
+
+        currentMarker = L.marker(latlng).addTo(map);
+    }
+
+    map.on('click', function(e) {
+        setMarker(e.latlng);
+
         //currentMarker.bindPopup("<b>Hello world!</b><br>I am a popup.").openPopup();
     });
 
-    $('#play_button').click(function() {        
-        let name = $('#nameinput').val();
-        if (name.length > 0) {
-            $('#nameinput_area').remove();
-            $('#play_button').hide();
-            let uri = '/rename_player?oldName=' + encodeURIComponent(myName) + '&newName=' + encodeURIComponent(name);
-            $.get(uri, function (n) {
-                myName = n;
-                $('#message').text('Du spelar som "' + n + '". Vänta tills spelet börjar!').show();
+    $('#play_button').click(function() {
+        if (currentMarker == null) {
+            // Set name
+            let name = $('#nameinput').val();
+            if (name.length > 0) {
+                $('#nameinput_area').remove();
+                $('#play_button').hide();
+                let uri = '/rename_player?oldName=' + encodeURIComponent(myName) + '&newName=' + encodeURIComponent(name);
+                $.get(uri, function (n) {
+                    myName = n;
+                    $('#message').text('Du spelar som "' + n + '". Vänta lite!').show();
+                });
+            }
+        }
+        else {
+            // Answer question
+            let pos = currentMarker.getLatLng();
+            let uri = '/answer?player=' + encodeURIComponent(myName) + '&lat=' + pos.lat + '&lng=' + pos.lng;
+            $.get(uri, function (n) {                
+                $('#message').text('Ditt svar är registrerat. Vänta på din poäng!').show();
+                $('#play_button').hide();
             });
         }
     });    
 
     socket.on('new_player_name', function(playerName, callback) {
         myName = playerName;        
-        $('#nameinput').attr('placeholder', playerName + " (Skriv ditt namn här)");
+        $('#nameinput').attr('placeholder', playerName + ", vad heter du?");
         callback({
             status: "ok"
         });
@@ -76,6 +94,17 @@ $(function () {
         $('#nameinput_area').remove();
         $('#message').text("Var ligger " + msg.name + "?").show();
         $('#play_button').text('SVARA').show();
+        setMarker(null);
+    });
+
+    socket.on('score', function(players) {
+        for (player in players) {
+            if (player == myName) {
+                let d = Math.round(players[player].distance * 10) / 10;
+                let s = Math.round(players[player].score * 10) / 10;
+                $('#message').text('Du var ' + d + ' från rätt plats! Total poäng: ' + s);
+            }
+        }
     });
 
 });

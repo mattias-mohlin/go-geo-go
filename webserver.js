@@ -9,6 +9,8 @@ module.exports = function() {
 
     let players = {}; // Player data
 
+    let countDownTimer = null;
+
     // Start the web server and add routes for serving static files. 
     // Then the registerRoutes function is called to allow additional routes to be added in the caller context.
     module.start = function(registerRoutes) {
@@ -63,6 +65,18 @@ module.exports = function() {
                 // Player dropped
                 console.log('a user disconnected: ' + socket.request.headers.referer);  
             });
+
+            socket.on('player_results', (results) => {
+                // The response contains player scores
+                for (player in results) {
+                    players[player].distance = results[player].distance;
+                    players[player].score += results[player].distance;
+    
+                    // Notify each player about his score (and leaderboard)
+                    io.emit('score', players);
+                }
+            });
+    
         });
 
         // Register other routes in the caller context
@@ -96,6 +110,42 @@ module.exports = function() {
 
         return newName;
     }
+
+    module.onPlayerAnswered = function(player, lat, lng) {
+        if (player in players) {
+            players[player].answer = {"lat" : lat, "lng" : lng};
+        }
+
+        // Stop the count-down when all players have answered
+        let everyoneHasAnswered = true;
+        for (p in players) {
+            if (! players[p].hasOwnProperty('answer')) {
+                everyoneHasAnswered = false;
+                break;
+            }
+        }
+
+        if (everyoneHasAnswered) {
+            clearInterval(countDownTimer);
+            module.notifyClients('player_answers_collected', players);
+        }
+    }
+
+    module.countDown = function() {
+        // Start count-down
+        let remaining = 60;
+        countDownTimer = setInterval(function() {
+            remaining--;
+            if (remaining == 0) {
+                clearInterval(countDownTimer);
+                module.notifyClients('player_answers_collected', players);
+            }
+            else {
+                module.notifyClients('count_down', {'remainingTime' : remaining});
+            }
+        }, 1000);
+        
+    }    
 
     // To be called whenever some player data is changed (the Admin UI then needs to be updated)
     module.onPlayerDataChanged = function() {
