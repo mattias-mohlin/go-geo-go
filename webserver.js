@@ -36,6 +36,18 @@ module.exports = function() {
             res.contentType("text/javascript");
             res.sendFile(__dirname + '/public/js/jquery/jquery.min.js');
         });
+        app.get('/images/marker_correct', function(req, res) {
+            res.contentType("img/png");
+            res.sendFile(__dirname + '/public/images/marker-correct.png');
+        });
+        app.get('/images/marker_correct_2x', function(req, res) {
+            res.contentType("img/png");
+            res.sendFile(__dirname + '/public/images/marker-correct-2x.png');
+        });
+        app.get('/images/marker_shadow', function(req, res) {
+            res.contentType("img/png");
+            res.sendFile(__dirname + '/public/images/marker-shadow.png');
+        });
 
         app.get('/adminPage', function(req, res) {
             res.contentType("text/html");
@@ -47,34 +59,55 @@ module.exports = function() {
         });
 
         io.on('connection', (socket) => {
-            console.log('a user connected: ' + socket.request.headers.referer);  
-            //if (!socket.request.headers.referer.includes('admin')) {
+            console.log('a user connected: ' + socket.request.headers.referer);
                 // Player connection
 
                 let playerName = 'Spelare ' + Object.keys(players).length;                
             
                 socket.emit('new_player_name', playerName, (response) => {
                     // Player received the event
-                    players[playerName] = {'score' : 0};
+                    players[playerName] = {};
                     this.onPlayerDataChanged();
                 });
-            //}
+/*
+                // Heartbeat to remove inactive players
+                let heartbeat = setInterval(function() {
+                    socket.timeout(1000).emit('is_player_active', (err, response) => {
+                        if (err) {
+                            // No longer active
+                            console.log('Player "' + playerName + '" is no longer active!');
+                            clearTimeout(heartbeat);
+                            delete players[playerName];
+                            module.onPlayerDataChanged();
+                        }
+                        else {
+                            // Player replied so is active
+                            console.log('Player "' + playerName + '" is still active!');
+                        }
+                    }); 
+                }, 3000);*/            
 
 
             socket.on('disconnect', () => { 
                 // Player dropped
-                console.log('a user disconnected: ' + socket.request.headers.referer);  
+                console.log('player "' + playerName + '" disconnected: ' + socket.request.headers.referer);
+                delete players[playerName];
+                module.onPlayerDataChanged();
+                module.checkActiveCountDown();
             });
 
             socket.on('player_results', (results) => {
                 // The response contains player scores
                 for (player in results) {
                     players[player].distance = results[player].distance;
-                    players[player].score += results[player].distance;
-    
-                    // Notify each player about his score (and leaderboard)
-                    io.emit('score', players);
+                    if (!players[player].hasOwnProperty('score'))
+                        players[player].score = 0;
+                    players[player].score += Math.round(results[player].distance);    
                 }
+
+                // Notify each player about his score (and leaderboard)
+                io.emit('score', players);
+
             });
     
         });
@@ -111,10 +144,10 @@ module.exports = function() {
         return newName;
     }
 
-    module.onPlayerAnswered = function(player, lat, lng) {
-        if (player in players) {
-            players[player].answer = {"lat" : lat, "lng" : lng};
-        }
+    // If there is an active count-down, stop it if there are no pending player answers
+    module.checkActiveCountDown = function() {
+        if (!countDownTimer)
+            return; // No count-down running
 
         // Stop the count-down when all players have answered
         let everyoneHasAnswered = true;
@@ -127,8 +160,17 @@ module.exports = function() {
 
         if (everyoneHasAnswered) {
             clearInterval(countDownTimer);
-            module.notifyClients('player_answers_collected', players);
+            countDownTimer = null;
+            module.notifyClients('player_answers_collected', players);            
         }
+    }
+
+    module.onPlayerAnswered = function(player, lat, lng) {
+        if (player in players) {
+            players[player].answer = {"lat" : lat, "lng" : lng};
+        }
+
+        this.checkActiveCountDown();
     }
 
     module.countDown = function() {
@@ -152,6 +194,15 @@ module.exports = function() {
         this.notifyClients('player_data_changed', players);
     }
 
+    module.newPlace = function(place) {
+        // Clear any previous answers
+        for (p in players) {
+            delete players[p].answer;
+        }
+
+        this.notifyClients('new_place', place);
+    }
+
     // Determines if the web server was started
     module.isStarted = function() {
         return io != null;
@@ -161,6 +212,10 @@ module.exports = function() {
     module.notifyClients = function(msg, data) {
         if (this.isStarted())
             io.emit(msg, data);
+    }
+
+    module.getPlayers = function() {
+        return players;
     }
 
     return module;

@@ -16,26 +16,7 @@ $(function () {
     }).addTo(map);
 
     map.fitWorld();
-/*
-    var mapIcons = {
-        guess: L.AwesomeMarkers.icon({
-            icon: 'question-circle',
-            markerColor: 'orange'
-        }),
-        city: L.AwesomeMarkers.icon({
-            icon: 'check',
-            markerColor: 'green'
-        })
-    };*/
-    /*var mapIcon = L.icon({
-        iconUrl: 'my-icon.png',
-        iconSize: [38, 95],
-        iconAnchor: [22, 94],
-        popupAnchor: [-3, -76],
-        shadowUrl: 'my-icon-shadow.png',
-        shadowSize: [68, 95],
-        shadowAnchor: [22, 94]
-    });*/
+
     var mapIcon = L.Icon.Default;
 
     var currentMarker = null;
@@ -52,9 +33,7 @@ $(function () {
     }
 
     map.on('click', function(e) {
-        setMarker(e.latlng);
-
-        //currentMarker.bindPopup("<b>Hello world!</b><br>I am a popup.").openPopup();
+        setMarker(e.latlng);        
     });
 
     $('#play_button').click(function() {
@@ -82,6 +61,12 @@ $(function () {
         }
     });    
 
+    socket.on('is_player_active', function(callback) {        
+        callback({
+            status: "active"
+        });
+    });
+
     socket.on('new_player_name', function(playerName, callback) {
         myName = playerName;        
         $('#nameinput').attr('placeholder', playerName + ", vad heter du?");
@@ -98,13 +83,15 @@ $(function () {
     });
 
     socket.on('score', function(players) {
-        for (player in players) {
-            if (player == myName) {
+        players.sort(function(a,b) {
+            return a.score - b.score;
+        }).forEach(function(p, i) {
+            if (p.name == myName) {
                 let d = Math.round(players[player].distance * 10) / 10;
-                let s = Math.round(players[player].score * 10) / 10;
-                $('#message').text('Du var ' + d + ' från rätt plats! Total poäng: ' + s);
+                let s = Math.round(players[player].score * 10) / 10;                
+                $('#message').text('Du var ' + d + ' från rätt plats! Total poäng: ' + s + '! ' + 'Du ligger ' + i + ':a!');
             }
-        }
+        });
     });
 
 });
