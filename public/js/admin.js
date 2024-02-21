@@ -45,16 +45,23 @@ $(function () {
     });
 
     function updatePlayerTable(players) {
-        // If players contains a score, empty the table to make sure it appears sorted according to score
-        if (players.length > 0 && players[0].hasOwnProperty('score')) {
-            $('.players_table tbody tr').empty();
+        // If any player contains a score, empty the table to make sure it appears sorted according to score
+        let hasScore = false;
+        for (p in players) {
+            if (players[p].hasOwnProperty('score')) {
+                hasScore = true;
+                break;
+            }
+        }
+        if (hasScore) {
+            $('.players_table tbody').empty();
         }
 
         Object.entries(players).sort(function(a,b) {
             if (a[1].hasOwnProperty('score') && !b[1].hasOwnProperty('score'))
                 return -1; // Player without score comes after any player that has a score
             else if (!a[1].hasOwnProperty('score') && b[1].hasOwnProperty('score'))
-                return 1; // Player with score comes before any player that has no score
+                return Number.MAX_VALUE; // Player with score comes before any player that has no score
             else if (!a[1].hasOwnProperty('score') && !b[1].hasOwnProperty('score'))
                 return 0; // Players without score come in the order of registration
 
@@ -109,7 +116,8 @@ $(function () {
             marker.bindTooltip(popupText).openTooltip();
             placedMarkers.push(marker);
 
-            let dist = map.distance(currentPlace.pos, pos) / 1000; // kilometers
+            let currentPos = L.latLng(currentPlace.lat, currentPlace.lng);
+            let dist = map.distance(currentPos, pos) / 1000; // kilometers
             players[player].distance = dist;
 
             if (minDist == -1 || dist < minDist) {
@@ -153,7 +161,8 @@ $(function () {
   		    shadowSize:  [41, 41]
         });
 
-        let correctMarker = L.marker(currentPlace.pos, {'icon' : correctIcon}).addTo(map);        
+        let currentPos = L.latLng(currentPlace.lat, currentPlace.lng);
+        let correctMarker = L.marker(currentPos, {'icon' : correctIcon}).addTo(map);        
         placedMarkers.push(correctMarker);
 
         let popupText = $('<div/>').text('***' + currentPlace.name + '***').html()
@@ -176,6 +185,7 @@ $(function () {
     $.get('/get_current_place', function (place) {
         if (Object.keys(place).length > 0) {
             // Game started
+            currentPlace = place;
             $('#start_button').text('FORTSÄTT');
         }
     });

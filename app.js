@@ -14,14 +14,14 @@ const logger = require('./logger');
 const env = process.env.NODE_ENV || 'development';
 /*
 const places = [
-    {'name' : 'Cochabamba', 'pos' : {'lat' : -17.413977, 'lng' : -66.165321}},
-    {'name' : 'Goa (Vagator Beach)', 'pos' : {'lat' : 15.597720, 'lng' : 73.746960}},
-    {'name' : 'Arusha', 'pos' : {'lat' : -3.386925, 'lng' : 36.682995}},
-    {'name' : 'Järvsö', 'pos' : {'lat' : 61.716011, 'lng' : 16.169710}},
-    {'name' : 'Warszawa', 'pos' : {'lat' : 52.229675, 'lng' : 21.012230}},
-    {'name' : 'Xian', 'pos' : {'lat' : 34.341576, 'lng' : 108.939774}},
-    {'name' : 'Las Vegas', 'pos' : {'lat' : 36.169941, 'lng' : -115.139832}},
-    {'name' : '', 'pos' : null} // End of game
+    {'name' : 'Cochabamba', 'lat' : -17.413977, 'lng' : -66.165321},
+    {'name' : 'Goa (Vagator Beach)', 'lat' : 15.597720, 'lng' : 73.746960},
+    {'name' : 'Arusha', 'lat' : -3.386925, 'lng' : 36.682995},
+    {'name' : 'Järvsö', 'lat' : 61.716011, 'lng' : 16.169710},
+    {'name' : 'Warszawa', 'lat' : 52.229675, 'lng' : 21.012230},
+    {'name' : 'Xian', 'lat' : 34.341576, 'lng' : 108.939774},
+    {'name' : 'Las Vegas', 'lat' : 36.169941, 'lng' : -115.139832},
+    {'name' : '', 'lat' : 0, 'lng' : 0} // End of game
 ];*/
 
 function shuffle(array) {
@@ -89,7 +89,7 @@ webServer.start((app) => {
         let lat = req.query.lat;
         let lng = req.query.lng;
 
-        webServer.onPlayerAnswered(player, lat, lng);
+        webServer.onPlayerAnswered(player, parseFloat(lat), parseFloat(lng));
         res.send('ok');
     });
 
