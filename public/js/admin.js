@@ -44,6 +44,8 @@ $(function () {
         }        
     });
 
+
+
     function updatePlayerTable(players) {
         // If any player contains a score, empty the table to make sure it appears sorted according to score
         let hasScore = false;
@@ -89,6 +91,11 @@ $(function () {
         setTimeout(function() {
             $('.player_change').removeClass('player_change');
         }, 3000);
+
+        $('.players_table tr').dblclick(function(e) {
+            let player = $(e.target).parent().text();
+            $.get('/check_active_players');
+        });
     }
 
     socket.on('player_data_changed', updatePlayerTable);

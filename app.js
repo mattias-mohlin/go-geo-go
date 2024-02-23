@@ -93,4 +93,9 @@ webServer.start((app) => {
         res.send('ok');
     });
 
+    app.get('/check_active_players', function(req, res) {
+        webServer.checkActivePlayers();
+        res.send('ok');
+    });
+
 });

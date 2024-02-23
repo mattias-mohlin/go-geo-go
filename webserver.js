@@ -11,6 +11,8 @@ module.exports = function() {
 
     let countDownTimer = null;
 
+    //let sockets = []; // List of {"socket", "player"} objects for active connections
+
     // Start the web server and add routes for serving static files. 
     // Then the registerRoutes function is called to allow additional routes to be added in the caller context.
     module.start = function(registerRoutes) {
@@ -27,6 +29,10 @@ module.exports = function() {
         app.get('/css', function(req, res) {
             res.contentType("text/css");
             res.sendFile(__dirname + '/public/css/styling.css');
+        });
+        app.get('/maincss', function(req, res) {
+            res.contentType("text/css");
+            res.sendFile(__dirname + '/public/css/main_styling.css');
         });
         app.get('/main', function(req, res) {
             res.contentType("text/javascript");
@@ -58,14 +64,37 @@ module.exports = function() {
             res.sendFile(__dirname + '/public/js/admin.js');
         });
 
+        app.get('/playerPage', function(req, res) {
+            res.contentType("text/html");
+            res.sendFile(__dirname + '/public/html/player.html');
+        });
+        app.get('/player', function(req, res) {
+            res.contentType("text/javascript");
+            res.sendFile(__dirname + '/public/js/player.js');
+        });
+        app.get('/images/marcus50', function(req, res) {
+            res.contentType("img/png");
+            res.sendFile(__dirname + '/public/images/marcus50.png');
+        });
+
+
         io.on('connection', (socket) => {
             console.log('a user connected: ' + socket.request.headers.referer);
+
+            if (socket.request.headers.referer.includes('admin')) {
+                console.log('Skipping!');
+                return;
+            }
+                
+
                 // Player connection
 
                 let playerName = 'Spelare ' + Object.keys(players).length;                
             
                 socket.emit('new_player_name', playerName, (response) => {
                     // Player received the event
+                    //sockets.push({"socket" : socket, "player" : playerName});
+
                     players[playerName] = {};
                     this.onPlayerDataChanged();
                 });
@@ -92,8 +121,17 @@ module.exports = function() {
                 // Player dropped
                 console.log('player "' + playerName + '" disconnected: ' + socket.request.headers.referer);
                 delete players[playerName];
-                module.onPlayerDataChanged();
-                module.checkActiveCountDown();
+                //module.onPlayerDataChanged();
+                //module.checkActiveCountDown();
+/*
+                sockets.every((e,i) => {
+                    if (e.player == playerName) {
+                        sockets.splice(i,1);
+                        return false;
+                    }
+                    return true;
+                });
+*/
             });
 
             socket.on('player_results', (results) => {
@@ -174,6 +212,8 @@ module.exports = function() {
     }
 
     module.countDown = function() {
+        module.checkActivePlayers();
+
         // Start count-down
         let remaining = 60;
         countDownTimer = setInterval(function() {
@@ -216,6 +256,24 @@ module.exports = function() {
 
     module.getPlayers = function() {
         return players;
+    }
+
+    module.checkActivePlayers = function() {
+        module.onPlayerDataChanged();
+        /*for (s of sockets) {
+            s.socket.timeout(1000).emit('is_player_active', (err, response) => {
+                if (err) {
+                    // No longer active
+                    console.log('Player "' + s.player + '" is no longer active!');                    
+                    delete players[s.player];
+                    module.onPlayerDataChanged();
+                }
+                else {
+                    // Player replied so is active
+                    console.log('Player "' + s.player + '" is still active!');
+                }
+            }); 
+        }*/
     }
 
     return module;
