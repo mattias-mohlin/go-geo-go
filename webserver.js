@@ -278,6 +278,9 @@ module.exports = function() {
 
     module.restart = function() {
         players = {};
+        if (countDownTimer)
+            clearInterval(countDownTimer);
+            
         countDownTimer = null;
         activePlace = false;
         this.notifyClients('game_restart', players);

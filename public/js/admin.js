@@ -107,8 +107,7 @@ $(function () {
     socket.on('player_data_changed', updatePlayerTable);
 
     socket.on('game_restart', () => {
-        updatePlayerTable({});
-        currentPlace = null;
+        window.location.replace('/adminPage');
     });
     
     socket.on('count_down', function(data) {
