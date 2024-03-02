@@ -44,7 +44,10 @@ $(function () {
         }        
     });
 
-
+    $('#reset_button').click(function() {  
+        // Restart game
+        $.get('/restart_game');
+    });
 
     function updatePlayerTable(players) {
         // If any player contains a score, empty the table to make sure it appears sorted according to score
@@ -81,8 +84,11 @@ $(function () {
                 return;
             }
             
-            // New player            
-            $('.players_table tbody').append('<tr data-player="' + playerName + '" class="player_change"><td>' + playerName + '</td><td>' + score +'</td></tr>');
+            // New player      
+            let style = 'player_change';
+            if (playerName == "marcus50")
+                style = style + ' marcus50';
+            $('.players_table tbody').append('<tr data-player="' + playerName + '" class="' + style + '"><td>' + playerName + '</td><td>' + score +'</td></tr>');
         });
 
         // Remove all unchanged rows
@@ -99,6 +105,11 @@ $(function () {
     }
 
     socket.on('player_data_changed', updatePlayerTable);
+
+    socket.on('game_restart', () => {
+        updatePlayerTable({});
+        currentPlace = null;
+    });
     
     socket.on('count_down', function(data) {
         $('#start_button').text(data.remainingTime);
@@ -134,28 +145,6 @@ $(function () {
         }
 
         // Show correct place on map
-        /*const myCustomColour = '#3acd61'
-
-        const markerHtmlStyles = `
-            background-color: ${myCustomColour};
-            width: 3rem;
-            height: 3rem;
-            display: block;
-            left: -1.5rem;
-            top: -1.5rem;
-            position: relative;
-            border-radius: 3rem 1rem 0;
-            transform: rotate(45deg);
-            border: 1px solid #FFFFFF
-        `;
-
-        const correctIcon = L.divIcon({
-            className: "correct-place-pin",
-            iconAnchor: [0, 24],
-            labelAnchor: [-6, 0],
-            popupAnchor: [0, -36],
-            html: `<span style="${markerHtmlStyles}" />`
-        });*/
 
         const correctIcon = L.icon({
             iconUrl: '/images/marker_correct',  

@@ -11,7 +11,7 @@ module.exports = function() {
 
     let countDownTimer = null;
 
-    //let sockets = []; // List of {"socket", "player"} objects for active connections
+    let activePlace = false;
 
     // Start the web server and add routes for serving static files. 
     // Then the registerRoutes function is called to allow additional routes to be added in the caller context.
@@ -79,59 +79,16 @@ module.exports = function() {
 
 
         io.on('connection', (socket) => {
-            console.log('a user connected: ' + socket.request.headers.referer);
-
             if (socket.request.headers.referer.includes('admin')) {
-                console.log('Skipping!');
-                return;
+                console.log('Admin page connection');             
             }
-                
-
-                // Player connection
-
-                let playerName = 'Spelare ' + Object.keys(players).length;                
-            
-                socket.emit('new_player_name', playerName, (response) => {
-                    // Player received the event
-                    //sockets.push({"socket" : socket, "player" : playerName});
-
-                    players[playerName] = {};
-                    this.onPlayerDataChanged();
-                });
-/*
-                // Heartbeat to remove inactive players
-                let heartbeat = setInterval(function() {
-                    socket.timeout(1000).emit('is_player_active', (err, response) => {
-                        if (err) {
-                            // No longer active
-                            console.log('Player "' + playerName + '" is no longer active!');
-                            clearTimeout(heartbeat);
-                            delete players[playerName];
-                            module.onPlayerDataChanged();
-                        }
-                        else {
-                            // Player replied so is active
-                            console.log('Player "' + playerName + '" is still active!');
-                        }
-                    }); 
-                }, 3000);*/            
-
+            else {
+                console.log('Connection from: ' + socket.request.headers.referer);
+            }
 
             socket.on('disconnect', () => { 
                 // Player dropped
-                console.log('player "' + playerName + '" disconnected: ' + socket.request.headers.referer);
-                delete players[playerName];
-                //module.onPlayerDataChanged();
-                //module.checkActiveCountDown();
-/*
-                sockets.every((e,i) => {
-                    if (e.player == playerName) {
-                        sockets.splice(i,1);
-                        return false;
-                    }
-                    return true;
-                });
-*/
+                console.log('Disconnection from: ' + socket.request.headers.referer);             
             });
 
             socket.on('player_results', (results) => {
@@ -143,8 +100,10 @@ module.exports = function() {
                     players[player].score += Math.round(results[player].distance);    
                 }
 
-                // Notify each player about his score (and leaderboard)
-                io.emit('score', players);
+                setTimeout( () => {
+                    // Notify each player about his score (and leaderboard)
+                    module.notifyClients('score', players);
+                }, 1000);                
 
             });
     
@@ -160,6 +119,7 @@ module.exports = function() {
         });        
     }
 
+    // Unused
     module.renamePlayer = function(oldName, newName) {
         let i = 1;
         while (players[newName] != undefined) {
@@ -182,6 +142,31 @@ module.exports = function() {
         return newName;
     }
 
+    module.registerPlayer = function(name) {
+        let i = 1;
+        while (players[name] != undefined) {
+            // New name alread occupied
+            name = name + i;
+            i++;
+        }
+
+        players[name] = {};
+        this.onPlayerDataChanged();
+        
+        logger.log('Player registered: ' + name + '!');
+
+        return name;
+    }
+
+    module.getPlayerState = function(playerName) {
+        let state = {};
+        state.info = activePlace ? 'ACTIVE_PLACE' : 'NO_ACTIVE_PLACE';
+        if (!activePlace) {
+            state.players = players;
+        }        
+        return state;
+    }
+
     // If there is an active count-down, stop it if there are no pending player answers
     module.checkActiveCountDown = function() {
         if (!countDownTimer)
@@ -199,6 +184,7 @@ module.exports = function() {
         if (everyoneHasAnswered) {
             clearInterval(countDownTimer);
             countDownTimer = null;
+            activePlace = false;
             module.notifyClients('player_answers_collected', players);            
         }
     }
@@ -220,6 +206,7 @@ module.exports = function() {
             remaining--;
             if (remaining == 0) {
                 clearInterval(countDownTimer);
+                activePlace = false;
                 module.notifyClients('player_answers_collected', players);
             }
             else {
@@ -234,11 +221,38 @@ module.exports = function() {
         this.notifyClients('player_data_changed', players);
     }
 
+    async function pingActivePlayers() {
+        let activePlayers = [];
+        const sockets = await io.fetchSockets();
+        for (socket of sockets) {
+            socket.emit('is_player_active', (r) => {
+                logger.log('Active player: ' + r.player);
+                activePlayers.push(r.player);
+            });
+        };                    
+        setTimeout(function() {
+            let changed = false;
+            for (p in players) {
+                if (!activePlayers.includes(p)) {
+                    logger.log('Deleting inactive player: ' + p);
+                    delete players[p];
+                    changed = true;
+                }
+            }
+            if (changed)
+                module.onPlayerDataChanged();
+        }, 2000);
+    }
+
     module.newPlace = function(place) {
         // Clear any previous answers
         for (p in players) {
             delete players[p].answer;
         }
+
+        pingActivePlayers();
+
+        activePlace = true;
 
         this.notifyClients('new_place', place);
     }
@@ -259,21 +273,14 @@ module.exports = function() {
     }
 
     module.checkActivePlayers = function() {
-        module.onPlayerDataChanged();
-        /*for (s of sockets) {
-            s.socket.timeout(1000).emit('is_player_active', (err, response) => {
-                if (err) {
-                    // No longer active
-                    console.log('Player "' + s.player + '" is no longer active!');                    
-                    delete players[s.player];
-                    module.onPlayerDataChanged();
-                }
-                else {
-                    // Player replied so is active
-                    console.log('Player "' + s.player + '" is still active!');
-                }
-            }); 
-        }*/
+        pingActivePlayers();
+    }
+
+    module.restart = function() {
+        players = {};
+        countDownTimer = null;
+        activePlace = false;
+        this.notifyClients('game_restart', players);
     }
 
     return module;

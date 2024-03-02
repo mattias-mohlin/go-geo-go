@@ -49,6 +49,8 @@ let currentPlace = -1;
 
 webServer.start((app) => {
     // Routes 
+
+    // Unused
     app.get('/rename_player', function(req, res) {
         let oldName = req.query.oldName;
         let newName = req.query.newName;                        
@@ -58,7 +60,15 @@ webServer.start((app) => {
         res.contentType("text/plain");
         res.send(newName);
     });
-    
+
+    app.get('/register_player', function(req, res) {
+        let name = req.query.name;
+        let playerName = webServer.registerPlayer(name);
+
+        res.contentType("text/plain");
+        res.send(playerName);
+    });
+
     app.get('/request_player_data', function(req, res) {
         res.contentType("text/json");            
 
@@ -67,11 +77,29 @@ webServer.start((app) => {
         res.send(players);
     });
 
+    // Return state information for admin page
     app.get('/get_current_place', function(req, res) {
         res.contentType("text/json");            
 
         let place = currentPlace == -1 ? {} : places[currentPlace];
         res.send(place);
+    });
+
+    // Return state information for player page
+    app.get('/get_player_state', function(req, res) {
+        let player = req.query.player;
+        res.contentType("text/json");            
+
+        let state;
+        if (currentPlace == -1) {
+            state = {'info' : 'NOT_STARTED'};
+        }
+        else {
+            state = webServer.getPlayerState(player);
+            state.place = places[currentPlace];
+        }
+
+        res.send(state);
     });
 
     app.get('/next_question', function(req, res) {
@@ -98,4 +126,9 @@ webServer.start((app) => {
         res.send('ok');
     });
 
+    app.get('/restart_game', function(req, res) {
+        currentPlace == -1;
+        webServer.restart();
+        res.send('ok');
+    });
 });

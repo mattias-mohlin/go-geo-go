@@ -20,7 +20,51 @@ $(function () {
     var mapIcon = L.Icon.Default;
 
     var currentMarker = null;
-    var myName = "anonym";
+
+    // Get player name from URL
+    const queryString = window.location.search;
+    const urlParams = new URLSearchParams(queryString);
+    var myName = urlParams.has('name') ? urlParams.get('name') : 'ANONYM';
+
+    function showScore(players) {
+        Object.entries(players).sort(function(a,b) {
+            if (a[1].hasOwnProperty('score') && !b[1].hasOwnProperty('score'))
+                return -1; // Player without score comes after any player that has a score
+            else if (!a[1].hasOwnProperty('score') && b[1].hasOwnProperty('score'))
+                return Number.MAX_VALUE; // Player with score comes before any player that has no score
+            else if (!a[1].hasOwnProperty('score') && !b[1].hasOwnProperty('score'))
+                return 0; // Players without score come in the order of registration
+
+            return a[1].score - b[1].score;
+        }).forEach(function(p, i) {
+            if (p[0] == myName) {
+                let d = Math.round(p[1].distance * 10) / 10;
+                let s = Math.round(p[1].score * 10) / 10;                
+                $('#message').html('Du var ' + d + ' km från rätt plats! <span class="blue">Total poäng: ' + s + '!</span><br> ' + 'Du ligger ' + (i+1) + ':a!').show();
+            }
+        });
+    }
+
+    // Get current state of web server
+    $.get('/get_player_state?name=' + + encodeURIComponent(myName), function (state) {
+        let msg = '';
+        if (state.info == 'NOT_STARTED') {
+            msg = 'Du spelar som "' + myName + '". Vänta lite!';
+            $('#play_button').hide();
+        }
+        else if (state.info == 'ACTIVE_PLACE') {
+            msg = "Var ligger " + state.place.name + "?";
+            $('#play_button').text('SVARA').show();
+        }
+        else {
+            // state.info == 'NO_ACTIVE_PLACE' (In between two places)
+            msg = 'Vänta på nästa fråga!';
+            showScore(state.players);
+            $('#play_button').hide();
+        }
+        
+        $('#message').text(msg).show();
+    });
 
     function setMarker(latlng) {
         if (currentMarker != null)
@@ -33,7 +77,9 @@ $(function () {
     }
 
     map.on('click', function(e) {
-        setMarker(e.latlng);        
+        // Only allow moving the marker while the play button is visible (no move after locked answer)
+        if ($('#play_button').is(":visible"))
+            setMarker(e.latlng);        
     });
 
     $('#play_button').click(function() {
@@ -63,10 +109,12 @@ $(function () {
 
     socket.on('is_player_active', function(callback) {        
         callback({
-            status: "active"
+            status: "active",
+            player: myName
         });
     });
 
+    // Unused
     socket.on('new_player_name', function(playerName, callback) {
         myName = playerName;        
         $('#nameinput').attr('placeholder', playerName + ", vad heter du?");
@@ -76,22 +124,17 @@ $(function () {
     });
 
     socket.on('new_place', function(msg) {
-        $('#nameinput_area').remove();
         $('#message').text("Var ligger " + msg.name + "?").show();
         $('#play_button').text('SVARA').show();
         setMarker(null);
     });
 
     socket.on('score', function(players) {
-        players.sort(function(a,b) {
-            return a.score - b.score;
-        }).forEach(function(p, i) {
-            if (p.name == myName) {
-                let d = Math.round(players[player].distance * 10) / 10;
-                let s = Math.round(players[player].score * 10) / 10;                
-                $('#message').text('Du var ' + d + ' från rätt plats! Total poäng: ' + s + '! ' + 'Du ligger ' + i + ':a!');
-            }
-        });
+        showScore(players);
+    });
+
+    socket.on('game_restart', () => {
+        window.location.replace('/');
     });
 
 });

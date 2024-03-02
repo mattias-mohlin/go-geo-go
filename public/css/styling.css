@@ -26,6 +26,13 @@ body {
   margin-top: 2px;
 } 
 
+#reset_button {
+  position:absolute;
+  top:0;
+  right:0;
+  font-size: 20px;
+}
+
 #textarea { 
   height: 20vh;
   border:1px solid black; 
@@ -43,6 +50,11 @@ body {
 
 #message {
   text-align: center;
+  font-size: 30px;
+}
+
+.blue {
+  color: blue;
 }
 
 .players_table {
@@ -73,6 +85,10 @@ body {
 .player_change {
   background-color: lightblue;
   animation: buildingAnim 2s infinite;
+}
+
+.marcus50 {
+  color: red;
 }
 
 @keyframes buildingAnim {
