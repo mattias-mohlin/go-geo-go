@@ -63,7 +63,7 @@ webServer.start((app) => {
 
     app.get('/register_player', function(req, res) {
         let name = req.query.name;
-        let playerName = webServer.registerPlayer(name);
+        let playerName = webServer.registerPlayer(name, true);
 
         res.contentType("text/plain");
         res.send(playerName);
@@ -87,15 +87,18 @@ webServer.start((app) => {
 
     // Return state information for player page
     app.get('/get_player_state', function(req, res) {
-        let player = req.query.player;
+        let player = req.query.name;
         res.contentType("text/json");            
+
+        // Make sure player is registered
+        let playerName = webServer.registerPlayer(player, false);
 
         let state;
         if (currentPlace == -1) {
             state = {'info' : 'NOT_STARTED'};
         }
         else {
-            state = webServer.getPlayerState(player);
+            state = webServer.getPlayerState(playerName);
             state.place = places[currentPlace];
         }
 

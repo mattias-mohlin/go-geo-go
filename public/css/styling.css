@@ -82,9 +82,13 @@ body {
     padding: 12px 15px;
 }
 
-.player_change {
+.new_player {
   background-color: lightblue;
   animation: buildingAnim 2s infinite;
+}
+
+.player_answered {
+  background-color: rgb(156, 180, 163);  
 }
 
 .marcus50 {

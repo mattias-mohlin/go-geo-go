@@ -97,7 +97,10 @@ module.exports = function() {
                     players[player].distance = results[player].distance;
                     if (!players[player].hasOwnProperty('score'))
                         players[player].score = 0;
-                    players[player].score += Math.round(results[player].distance);    
+                    players[player].score += Math.round(results[player].distance);  
+                    if (!players[player].hasOwnProperty('answers'))
+                        players[player].answers = 0;
+                    players[player].answers += 1;
                 }
 
                 setTimeout( () => {
@@ -142,18 +145,28 @@ module.exports = function() {
         return newName;
     }
 
-    module.registerPlayer = function(name) {
-        let i = 1;
-        while (players[name] != undefined) {
-            // New name alread occupied
-            name = name + i;
-            i++;
+    module.registerPlayer = function(name, fromMainPage) {
+        if (!fromMainPage) {
+            // In most cases the player will already be registered here.
+            // Don't overwrite his existing data
+            if (players[name] == undefined) {
+                players[name] = {};        
+                logger.log('Player registered: ' + name + '!');
+            }
+        }
+        else {
+            let i = 1;
+            while (players[name] != undefined) {
+                // New name alread occupied
+                name = name + i;
+                i++;
+            }
+
+            players[name] = {};
+            logger.log('Player registered: ' + name + '!');
         }
 
-        players[name] = {};
-        this.onPlayerDataChanged();
-        
-        logger.log('Player registered: ' + name + '!');
+        this.onPlayerDataChanged();                
 
         return name;
     }
@@ -193,6 +206,8 @@ module.exports = function() {
         if (player in players) {
             players[player].answer = {"lat" : lat, "lng" : lng};
         }
+
+        module.notifyClients('player_answered', player);
 
         this.checkActiveCountDown();
     }

@@ -9,6 +9,7 @@ $(function () {
     var map = L.map('map').setView([51.505, -0.09], 13);
 
     L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        noWrap: true,
         center: [57.363, 14.06],
         maxZoom: 4,
         minZoom: 2,
@@ -35,6 +36,11 @@ $(function () {
             else if (!a[1].hasOwnProperty('score') && !b[1].hasOwnProperty('score'))
                 return 0; // Players without score come in the order of registration
 
+            // If two players have different number of answers, the one with more answers comes first
+            if (a[1].hasOwnProperty('answers') && b[1].hasOwnProperty('answers') && a[1].answers != b[1].answers) {
+                return b[1].answers - a[1].answers;
+            }
+
             return a[1].score - b[1].score;
         }).forEach(function(p, i) {
             if (p[0] == myName) {
@@ -46,7 +52,7 @@ $(function () {
     }
 
     // Get current state of web server
-    $.get('/get_player_state?name=' + + encodeURIComponent(myName), function (state) {
+    $.get('/get_player_state?name=' + encodeURIComponent(myName), function (state) {
         let msg = '';
         if (state.info == 'NOT_STARTED') {
             msg = 'Du spelar som "' + myName + '". Vänta lite!';
@@ -58,7 +64,7 @@ $(function () {
         }
         else {
             // state.info == 'NO_ACTIVE_PLACE' (In between two places)
-            msg = 'Vänta på nästa fråga!';
+            msg = myName + ', vänta på nästa fråga!';
             showScore(state.players);
             $('#play_button').hide();
         }
@@ -131,7 +137,13 @@ $(function () {
 
     socket.on('score', function(players) {
         showScore(players);
+        $('#play_button').hide();
     });
+
+    socket.on('count_down', function(data) {
+        let t = 'SVARA (' + data.remainingTime + ')';
+        $('#play_button').text(t);
+    });  
 
     socket.on('game_restart', () => {
         window.location.replace('/');

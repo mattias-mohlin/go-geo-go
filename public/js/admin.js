@@ -12,7 +12,9 @@ $(function () {
     let placedMarkers = [];
 
     L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        noWrap: true,
         maxZoom: 19,
+        minZoom: 2,
         attribution: 'Marcus 50 år av resor!'
     }).addTo(map);
 
@@ -70,25 +72,32 @@ $(function () {
             else if (!a[1].hasOwnProperty('score') && !b[1].hasOwnProperty('score'))
                 return 0; // Players without score come in the order of registration
 
+            // If two players have different number of answers, the one with more answers comes first
+            if (a[1].hasOwnProperty('answers') && b[1].hasOwnProperty('answers') && a[1].answers != b[1].answers) {
+                return b[1].answers - a[1].answers;
+            }
+
             return a[1].score - b[1].score;
         }).forEach(function(p, i) {
             let playerName = p[0];
             let playerData = p[1];
             let score = playerData.hasOwnProperty('score') ? playerData.score : '';
+            let answers = playerData.hasOwnProperty('answers') ? playerData.answers : 0;
             let player_row = $('.players_table tbody').find('tr[data-player="' + playerName + '"]');
             if (player_row.length > 0) {
                 player_row.addClass('player_change');
                 let cells = player_row.children('td');
                 cells.eq(0).text(playerName);
                 cells.eq(1).text(score);
+                cells.eq(2).text(answers);
                 return;
             }
             
             // New player      
-            let style = 'player_change';
+            let style = 'player_change new_player';
             if (playerName == "marcus50")
                 style = style + ' marcus50';
-            $('.players_table tbody').append('<tr data-player="' + playerName + '" class="' + style + '"><td>' + playerName + '</td><td>' + score +'</td></tr>');
+            $('.players_table tbody').append('<tr data-player="' + playerName + '" class="' + style + '"><td>' + playerName + '</td><td>' + score +'</td><td>' + answers + '</td></tr>');
         });
 
         // Remove all unchanged rows
@@ -96,6 +105,7 @@ $(function () {
 
         setTimeout(function() {
             $('.player_change').removeClass('player_change');
+            $('.new_player').removeClass('new_player');
         }, 3000);
 
         $('.players_table tr').dblclick(function(e) {
@@ -114,7 +124,12 @@ $(function () {
         $('#start_button').text(data.remainingTime);
     });  
 
-    socket.on('player_answers_collected', function(players) {              
+    socket.on('player_answered', function(playerName) {
+        $('.players_table tbody').find('tr[data-player="' + playerName + '"]').addClass('player_answered');
+    });
+
+    socket.on('player_answers_collected', function(players) {
+        $('.players_table tbody').find('tr').removeClass('player_answered');
         $('.players_table').hide();
         $('#map').show();
         map.invalidateSize(); // To force a refresh of the map when it becomes visible
