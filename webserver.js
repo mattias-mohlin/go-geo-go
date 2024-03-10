@@ -1,5 +1,5 @@
 const logger = require('./logger');
-const port = 5050;
+const port = parseInt(process.env.PORT) || 5050;
 
 // Webserver 
 module.exports = function() {   
@@ -256,7 +256,7 @@ module.exports = function() {
             }
             if (changed)
                 module.onPlayerDataChanged();
-        }, 2000);
+        }, 10000);
     }
 
     module.newPlace = function(place) {
