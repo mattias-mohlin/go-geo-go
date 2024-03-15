@@ -17,8 +17,12 @@ div.img {
     top: 5%;
     left: 50%;
     transform: translate(-50%, -50%);
-  }
+}
 
-  #nameinput {
-    font-size: 32px;
-  }
+#nameinput {
+  font-size: 32px;
+}
+
+::placeholder {
+    text-align: center; 
+}

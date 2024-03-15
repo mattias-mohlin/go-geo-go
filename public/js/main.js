@@ -5,8 +5,8 @@
 
 $(function () {
     
-    $("#nameinput").on("keydown",function (e) {
-        if(e.keyCode == 13) {
+    function register(e) {
+        if(e.type == "blur" || e.keyCode == 13) {
             let name = $(this).val();
             if (name.length > 0) {                
                 let uri = '/register_player?name=' + encodeURIComponent(name);
@@ -15,7 +15,11 @@ $(function () {
                 });
             }
         }
-    });
+    }
+
+    $("#nameinput").on("keydown", register);
+
+    $("#nameinput").blur(register);
     
 
 });
