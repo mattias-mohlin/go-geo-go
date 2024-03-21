@@ -12,7 +12,7 @@ const webServer = require('./webserver')();
 const logger = require('./logger');
 
 const env = process.env.NODE_ENV || 'development';
-/*
+
 const places = [
     {'name' : 'Cochabamba', 'lat' : -17.413977, 'lng' : -66.165321},
     {'name' : 'Goa (Vagator Beach)', 'lat' : 15.597720, 'lng' : 73.746960},
@@ -22,7 +22,7 @@ const places = [
     {'name' : 'Xian', 'lat' : 34.341576, 'lng' : 108.939774},
     {'name' : 'Las Vegas', 'lat' : 36.169941, 'lng' : -115.139832},
     {'name' : '', 'lat' : 0, 'lng' : 0} // End of game
-];*/
+];
 
 function shuffle(array) {
     let currentIndex = array.length,  randomIndex;
@@ -43,7 +43,7 @@ function shuffle(array) {
 }
 
 var fs = require('fs');
-const places = shuffle(JSON.parse(fs.readFileSync('cities-capitals.json', 'utf8')));
+//const places = shuffle(JSON.parse(fs.readFileSync('cities-capitals.json', 'utf8')));
 
 let currentPlace = -1;
 

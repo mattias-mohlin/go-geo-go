@@ -76,6 +76,14 @@ module.exports = function() {
             res.contentType("img/png");
             res.sendFile(__dirname + '/public/images/marcus50.png');
         });
+        app.get('/images/marcus50_2', function(req, res) {
+            res.contentType("img/png");
+            res.sendFile(__dirname + '/public/images/marcus50_2.png');
+        });
+        app.get('/images/marcus50_3', function(req, res) {
+            res.contentType("img/png");
+            res.sendFile(__dirname + '/public/images/marcus50_3.png');
+        });
 
 
         io.on('connection', (socket) => {
@@ -265,7 +273,7 @@ module.exports = function() {
             delete players[p].answer;
         }
 
-        pingActivePlayers();
+        //pingActivePlayers();
 
         activePlace = true;
 
@@ -288,7 +296,7 @@ module.exports = function() {
     }
 
     module.checkActivePlayers = function() {
-        pingActivePlayers();
+        //pingActivePlayers();
     }
 
     module.restart = function() {

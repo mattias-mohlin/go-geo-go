@@ -21,5 +21,14 @@ $(function () {
 
     $("#nameinput").blur(register);
     
+    let images = ['/images/marcus50', '/images/marcus50_2', '/images/marcus50_3'];
+    let i = 0;
+    setInterval(function() {
+        if (i == images.length)
+            i = 0;
+
+        $('div.img').css({'background-image': 'url("' + images[i] + '")'});
+        i++;
+    }, 2000);
 
 });
